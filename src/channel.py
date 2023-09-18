@@ -1,10 +1,12 @@
 import json
 import os
+
 import requests
 from googleapiclient.discovery import build
 
 # Получаем ключ API YouTube из переменных окружения
 api_key = os.getenv("YOUTUBE_API_KEY")
+
 
 class Channel:
     """
@@ -31,6 +33,42 @@ class Channel:
         self.view_count = 0
 
         self.get_info()
+
+    def __str__(self):
+        """
+        Магический метод __str__, возвращающий название и ссылку на канал по шаблону <название_канала> (<ссылка_на_канал>).
+        """
+        return f"{self.title} ({self.url})"
+
+    def __add__(self, other):
+        """
+        Магический метод __add__, выполняющий сложение двух каналов по количеству подписчиков.
+        """
+        return self.subscribers + other.subscribers
+
+    def __sub__(self, other):
+        """
+        Магический метод __sub__, выполняющий вычитание одного канала из другого по количеству подписчиков.
+        """
+        return self.subscribers - other.subscribers
+
+    def __eq__(self, other):
+        """
+        Магический метод __eq__, сравнивающий два канала по количеству подписчиков.
+        """
+        return self.subscribers == other.subscribers
+
+    def __lt__(self, other):
+        """
+        Магический метод __lt__, проверяющий, что количество подписчиков у текущего канала меньше, чем у другого канала.
+        """
+        return self.subscribers < other.subscribers
+
+    def __le__(self, other):
+        """
+        Магический метод __le__, проверяющий, что количество подписчиков у текущего канала меньше либо равно, чем у другого канала.
+        """
+        return self.subscribers <= other.subscribers
 
     @property
     def channel_id(self):
@@ -88,6 +126,7 @@ class Channel:
 
         with open(file_name, "w") as json_file:
             json_file.write(json.dumps(channel_info, indent=2, ensure_ascii=False))
+
 
 if __name__ == '__main__':
     # Пример использования класса Channel
