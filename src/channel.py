@@ -31,7 +31,6 @@ class Channel:
         self.subscribers = 0
         self.video_count = 0
         self.view_count = 0
-
         self.get_info()
 
     def __str__(self):

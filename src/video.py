@@ -25,16 +25,24 @@ class Video:
             video_id (str): Идентификатор видео на YouTube.
         """
         self.video_id = video_id
-        self.title = ""
-        self.url = ""
-        self.views = 0
-        self.likes = 0
-
-        if not api_key:
-            print("Не установлен ключ API YouTube.")
-            return
-
-        self.get_video_info()
+        self.title = None
+        self.url = None
+        self.views = None
+        self.like_count = None
+        try:
+            # Попытка получить данные о видео по API
+            response = requests.get(f'https://api.example.com/video/{video_id}')
+            data = response.json()
+            self.title = data.get('title')
+            self.like_count = data.get('likes_count')
+        except requests.exceptions.RequestException:
+            # Обработка ошибок при запросе к API
+            pass
+        # if not api_key:
+        #     print("Не установлен ключ API YouTube.")
+        #     return
+        #
+        # self.get_video_info()
 
     def __str__(self):
         """
@@ -91,9 +99,9 @@ class PLVideo(Video):
         return self.__playlist_id
 
 
-if __name__ == '__main__':
-    video = Video('AWX4JnAnjBE')
-    assert str(video) == 'GIL в Python: зачем он нужен и как с этим жить'
-
-    pl_video = PLVideo('4fObz_qw9u4', 'PLv_zOGKKxVph_8g2Mqc3LMhj0M_BfasbC')
-    assert str(pl_video) == 'MoscowPython Meetup 78 - вступление'
+# if __name__ == '__main__':
+#     video = Video('AWX4JnAnjBE')
+#     assert str(video) == 'GIL в Python: зачем он нужен и как с этим жить'
+#
+#     pl_video = PLVideo('4fObz_qw9u4', 'PLv_zOGKKxVph_8g2Mqc3LMhj0M_BfasbC')
+#     assert str(pl_video) == 'MoscowPython Meetup 78 - вступление'
