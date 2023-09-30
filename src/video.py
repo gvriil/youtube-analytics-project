@@ -14,7 +14,7 @@ class Video:
         title (str): Название видео.
         url (str): Ссылка на видео.
         views (int): Количество просмотров видео.
-        likes (int): Количество лайков видео.
+        like_count (int): Количество лайков видео.
     """
 
     def __init__(self, video_id):
@@ -29,20 +29,6 @@ class Video:
         self.url = None
         self.views = None
         self.like_count = None
-        try:
-            # Попытка получить данные о видео по API
-            response = requests.get(f'https://api.example.com/video/{video_id}')
-            data = response.json()
-            self.title = data.get('title')
-            self.like_count = data.get('likes_count')
-        except requests.exceptions.RequestException:
-            # Обработка ошибок при запросе к API
-            pass
-        # if not api_key:
-        #     print("Не установлен ключ API YouTube.")
-        #     return
-        #
-        # self.get_video_info()
 
     def __str__(self):
         """
@@ -57,19 +43,20 @@ class Video:
         """
         Получает информацию о видео из YouTube API и обновляет атрибуты объекта.
         """
-        url = f"https://www.googleapis.com/youtube/v3/videos?key={api_key}&id={self.video_id}&part=snippet,statistics"
-        response = requests.get(url)
-
-        if response.status_code == 200:
+        try:
+            # Попытка получить данные о видео по API
+            response = requests.get(f'https://api.example.com/video/{self.video_id}')
             data = response.json()
-            video_data = data.get("items")[0]
-
-            self.title = video_data['snippet']['title']
-            self.url = f"https://www.youtube.com/watch?v={self.video_id}"
-            self.views = int(video_data['statistics']['viewCount'])
-            self.likes = int(video_data['statistics']['likeCount'])
-        else:
-            print("Ошибка при получении данных о видео.")
+            if 'title' in data and 'likes_count' in data:
+                self.title = data['title']
+                self.like_count = data['likes_count']
+            else:
+                self.title = None
+                self.like_count = None
+        except requests.exceptions.RequestException:
+            # Обработка ошибок при запросе к API
+            self.title = None
+            self.like_count = None
 
 
 class PLVideo(Video):
@@ -97,11 +84,3 @@ class PLVideo(Video):
             str: Идентификатор плейлиста.
         """
         return self.__playlist_id
-
-
-# if __name__ == '__main__':
-#     video = Video('AWX4JnAnjBE')
-#     assert str(video) == 'GIL в Python: зачем он нужен и как с этим жить'
-#
-#     pl_video = PLVideo('4fObz_qw9u4', 'PLv_zOGKKxVph_8g2Mqc3LMhj0M_BfasbC')
-#     assert str(pl_video) == 'MoscowPython Meetup 78 - вступление'
