@@ -40,23 +40,27 @@ class Video:
         return f"{self.title}"
 
     def get_video_info(self):
-        """
-        Получает информацию о видео из YouTube API и обновляет атрибуты объекта.
-        """
         try:
             # Попытка получить данные о видео по API
             response = requests.get(f'https://api.example.com/video/{self.video_id}')
             data = response.json()
+
+            # Проверяем наличие нужных полей в данных
             if 'title' in data and 'likes_count' in data:
-                self.title = data['title']
-                self.like_count = data['likes_count']
+                self.title = data.get('title')
+                self.like_count = data.get('likes_count')
             else:
+                # Если какие-то поля отсутствуют, устанавливаем все атрибуты в None
                 self.title = None
                 self.like_count = None
+                self.url = None
+                self.views = None
         except requests.exceptions.RequestException:
             # Обработка ошибок при запросе к API
             self.title = None
             self.like_count = None
+            self.url = None
+            self.views = None
 
 
 class PLVideo(Video):
