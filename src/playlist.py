@@ -1,72 +1,62 @@
-import os
 from datetime import timedelta
-
-import requests
-
+from src.api_key import BaseApi
 from src.video import Video
 
-# Получаем ключ API YouTube из переменных окружения
-api_key = os.getenv("YOUTUBE_API_KEY")
 
-
-class PlayList:
+class PlayList(BaseApi):
     """
     Класс для работы с данными о плейлисте YouTube.
     """
 
     def __init__(self, playlist_id):
+
         """
         Инициализация объекта класса PlayList.
 
         :param playlist_id: Идентификатор плейлиста YouTube.
         """
+        self._playlist_data = None
+        self._playlist_videos_data = None
+        self.youtube = self.get_service()
         self.playlist_id = playlist_id
         self.title = ""
         self.url = ""
         self.videos = []
-
-        if not api_key:
-            print("Не установлен ключ API YouTube.")
-            return
-
         self.get_playlist_info()
 
     def get_playlist_info(self):
         """
         Получает информацию о плейлисте из YouTube API и обновляет атрибуты объекта.
         """
-        url = f"https://www.googleapis.com/youtube/v3/playlists?key={api_key}&id={self.playlist_id}&part=snippet"
-        response = requests.get(url)
+        try:
+            self._playlist_data = self.youtube.playlists().list(id=self.playlist_id,
+                                                                part='snippet').execute()
 
-        if response.status_code == 200:
-            data = response.json()
-            playlist_data = data.get("items")[0]
+            playlist_data = self._playlist_data.get("items")[0]
 
             self.title = playlist_data['snippet']['title']
             self.url = f"https://www.youtube.com/playlist?list={self.playlist_id}"
 
             # Получение видео из плейлиста
             self.get_playlist_videos()
-        else:
-            print("Ошибка при получении данных о плейлисте.")
+        except IndexError:
+            raise Exception('Не удалось получить данные о плейлисте')
 
     def get_playlist_videos(self):
         """
         Получает информацию о видео в плейлисте из YouTube API и обновляет список видео в атрибуте объекта.
         """
-        url = f"https://www.googleapis.com/youtube/v3/playlistItems?key={api_key}&playlistId={self.playlist_id}&part=snippet"
-        response = requests.get(url)
 
-        if response.status_code == 200:
-            data = response.json()
-            video_items = data.get("items")
-
+        try:
+            self._playlist_videos_data = self.youtube.playlistItems().list(
+                playlistId=self.playlist_id, part='snippet').execute()
+            video_items = self._playlist_videos_data.get("items")
             for video_item in video_items:
                 video_id = video_item['snippet']['resourceId']['videoId']
                 video = Video(video_id)
                 self.videos.append(video)
-        else:
-            print("Ошибка при получении видео из плейлиста.")
+        except IndexError:
+            raise Exception('Ошибка при получении видео из плейлиста.')
 
     @property
     def total_duration(self):
@@ -88,7 +78,7 @@ class PlayList:
         """
         if not self.videos:
             return None
-        best_video = max(self.videos, key=lambda video: video.likes)
+        best_video = max(self.videos, key=lambda video: video.like_count)
 
         # Извлечь video_id из полного URL видео
         video_id = best_video.video_id

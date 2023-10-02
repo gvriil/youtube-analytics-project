@@ -1,11 +1,11 @@
-import os
-import requests
+import json
 
-# Получаем ключ API YouTube из переменных окружения
-api_key = os.getenv("YOUTUBE_API_KEY")
+import isodate
+
+from src.api_key import BaseApi
 
 
-class Video:
+class Video(BaseApi):
     """
     Класс для работы с данными о видео на YouTube.
 
@@ -25,10 +25,16 @@ class Video:
             video_id (str): Идентификатор видео на YouTube.
         """
         self.video_id = video_id
-        self.title = None
-        self.url = None
-        self.views = None
-        self.like_count = None
+        self.title = ""
+        self.url = ""
+        self.views = 0
+        self.like_count = 0
+        self.duration = None
+        # if not api_key:
+        #     print("Не установлен ключ API YouTube.")
+        #     raise
+
+        self.get_video_info()
 
     def __str__(self):
         """
@@ -40,27 +46,29 @@ class Video:
         return f"{self.title}"
 
     def get_video_info(self):
+        """
+        Получает информацию о видео из YouTube API и обновляет атрибуты объекта.
+        """
+        youtube = self.get_service()
+
         try:
             # Попытка получить данные о видео по API
-            response = requests.get(f'https://api.example.com/video/{self.video_id}')
-            data = response.json()
+            response = youtube.videos().list(id=self.video_id,
+                                             part='snippet,statistics,contentDetails').execute()
+            video_data = response.get("items")[0]
 
-            # Проверяем наличие нужных полей в данных
-            if 'title' in data and 'likes_count' in data:
-                self.title = data.get('title')
-                self.like_count = data.get('likes_count')
-            else:
-                # Если какие-то поля отсутствуют, устанавливаем все атрибуты в None
-                self.title = None
-                self.like_count = None
-                self.url = None
-                self.views = None
-        except requests.exceptions.RequestException:
+            self.title = video_data['snippet']['title']
+            self.url = f"https://www.youtube.com/watch?v={self.video_id}"
+            self.views = int(video_data['statistics']['viewCount'])
+            self.like_count = int(video_data['statistics']['likeCount'])
+
+            self.duration = isodate.parse_duration(video_data['contentDetails']['duration'])
+        except IndexError:
             # Обработка ошибок при запросе к API
             self.title = None
-            self.like_count = None
             self.url = None
             self.views = None
+            self.like_count = None
 
 
 class PLVideo(Video):
